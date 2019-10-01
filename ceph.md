@@ -135,7 +135,7 @@ ceph-deploy osd create --data /dev/vdb ceph-1
 ```
 
 
-## <a href="#glance"> CEPH GLANCE INTEGRATION </a>
+## <a name="glance"> CEPH GLANCE INTEGRATION </a>
 
 - Tạo pool chứa images:
 
