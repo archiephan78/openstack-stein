@@ -780,3 +780,17 @@ service apache2 reload
 
 
 ![](static/horizon.png) 
+
+
+## INSTALL CINDER (Block Storage service)
+
+- Create DB:
+
+```
+mysql
+CREATE DATABASE cinder;
+GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'localhost' IDENTIFIED BY 'stein-demo';
+GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'%' IDENTIFIED BY 'stein-demo';
+```
+
+- 
