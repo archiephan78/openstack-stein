@@ -276,4 +276,4 @@ flavor = keystone
 EOF
 ```
 
-- Config ceph ở bên mục ceph config glance [Here](#glance)
+- Config ceph ở bên mục ceph config glance [Here](ceph.md#glance)
