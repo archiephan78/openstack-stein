@@ -155,6 +155,12 @@ rbd pool init images
 ceph auth get-or-create client.glance mon 'profile rbd' osd 'profile rbd pool=images'
 ceph auth get-or-create client.glance | ssh root@172.16.78.20 sudo tee /etc/ceph/ceph.client.glance.keyring
 ```
+- Vì chúng ta chỉ có 1 node ceph( cho ddwox mất tgian setup) nên set size và min_size của pool về  1:
+
+```
+ceph osd pool set images size 1 --yes-i-really-mean-it
+ceph osd pool set images min_size 1 --yes-i-really-mean-it
+```
 
 - Thêm config glance trong <i>/etc/glance/glance-api.conf</i>:
 
