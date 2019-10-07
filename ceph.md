@@ -155,7 +155,7 @@ rbd pool init images
 ceph auth get-or-create client.glance mon 'profile rbd' osd 'profile rbd pool=images'
 ceph auth get-or-create client.glance | ssh root@172.16.78.20 sudo tee /etc/ceph/ceph.client.glance.keyring
 ```
-- Vì chúng ta chỉ có 1 node ceph( cho ddwox mất tgian setup) nên set size và min_size của pool về  1:
+- Vì chúng ta chỉ có 1 node ceph( cho đỡ mất tgian setup) nên set size và min_size của pool về  1:
 
 ```
 ceph osd pool set images size 1 --yes-i-really-mean-it
@@ -194,3 +194,47 @@ cluster_network = 10.5.9.110/22
 EOF
 ```
 
+## <a name="cinder"> CEPH CINDER INTEGRATION </a>
+
+- Tạo pool chứa volume:
+
+```
+ceph osd pool create volumes 64
+```
+
+- Init pool volumes với rbd:
+
+```
+rbd pool init volumes
+```
+
+- Vì chúng ta chỉ có 1 node ceph( cho đỡ mất tgian setup) nên set size và min_size của pool về  1:
+
+```
+ceph osd pool set volumes size 1 --yes-i-really-mean-it
+ceph osd pool set volumes min_size 1 --yes-i-really-mean-it
+```
+
+- Tạo user cinder và grant quyền:
+
+```
+ceph auth get-or-create client.cinder mon 'profile rbd' osd 'profile rbd pool=volumes, profile rbd-read-only pool=images'
+ceph auth get-or-create client.cinder | ssh root@172.16.78.20 sudo tee /etc/ceph/ceph.client.cinder.keyring
+```
+
+- Config cinder use ceph:
+
+```
+[ceph]
+volume_driver = cinder.volume.drivers.rbd.RBDDriver
+volume_backend_name = ceph
+rbd_pool = volumes
+rbd_ceph_conf = /etc/ceph/ceph.conf
+rbd_flatten_volume_from_snapshot = false
+rbd_max_clone_depth = 5
+rbd_store_chunk_size = 4
+rados_connect_timeout = -1
+rbd_user = cinder
+rbd_secret_uuid = 6710902a-0466-49ba-87b4-d4653783305c
+report_discard_supported = true
+```

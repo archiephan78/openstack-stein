@@ -408,7 +408,7 @@ EOF
 su -s /bin/sh -c "placement-manage db sync" placement
 ```
 
-- Do placement api chay quia wsgi của apache nên restart apache để apply config
+- Do placement api chay qua wsgi của apache nên restart apache để apply config
 
 ```
 service apache2 restart
@@ -718,7 +718,7 @@ EOF
 cat <<EOF > /etc/neutron/plugins/ml2/ml2_conf.ini
 [DEFAULT]
 path_mtu = 1542
-physical_network_mtus = physnet1:1500
+physical_network_mtus = provider:1500
 [ml2]
 type_drivers = flat,vlan,gre
 tenant_network_types = gre,vlan
@@ -726,17 +726,23 @@ mechanism_drivers = openvswitch,l2population
 extension_drivers = port_security, qoss
 
 [ml2_type_flat]
-flat_networks = external
+flat_networks = provider
 
 [ml2_type_gre]
 tunnel_id_ranges = 100:20000
 
 [ml2_type_vlan]
-network_vlan_ranges = physnet1:2100:2150
+network_vlan_ranges = provider:2100:2150
 
 [securitygroup]
 enable_ipset = True
 EOF
+```
+
+- Restart service:
+
+```
+service neutron-server restart
 ```
 
 ## INSTALL HORIZON
@@ -793,4 +799,173 @@ GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'localhost' IDENTIFIED BY 'stein-de
 GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'%' IDENTIFIED BY 'stein-demo';
 ```
 
-- 
+-  create the service credentials:
+
+```
+openstack user create cinder --domain default --password stein-demo
+openstack role add --project service --user cinder admin
+openstack service create --name cinderv2 --description "OpenStack Block Storage" volumev2
+openstack service create --name cinderv3 --description "OpenStack Block Storage" volumev3
+openstack endpoint create --region RegionOne volumev2 public http://10.5.8.116:8776/v2/%\(project_id\)s
+openstack endpoint create --region RegionOne volumev2 internal http://172.16.78.20:8776/v2/%\(project_id\)s
+openstack endpoint create --region RegionOne volumev2 admin http://172.16.78.20:8776/v2/%\(project_id\)s
+openstack endpoint create --region RegionOne volumev3 public http://10.5.8.116:8776/v3/%\(project_id\)s
+openstack endpoint create --region RegionOne volumev3 internal http://172.16.78.20:8776/v3/%\(project_id\)s
+openstack endpoint create --region RegionOne volumev3 admin http://172.16.78.20:8776/v3/%\(project_id\)s
+```
+
+- Install the packages
+
+```
+apt install cinder-api cinder-scheduler cinder-volume -y
+```
+
+- Config cinder using CEPH [Here](ceph.md#cinder)
+
+- Config /etc/cinder/cinder.conf
+
+```
+cat << EOF > /etc/cinder/cinder.conf
+[DEFAULT]
+rootwrap_config = /etc/cinder/rootwrap.conf
+api_paste_confg = /etc/cinder/api-paste.ini
+iscsi_helper = tgtadm
+volume_name_template = volume-%s
+volume_group = cinder-volumes
+verbose = True
+auth_strategy = keystone
+state_path = /var/lib/cinder
+lock_path = /var/lock/cinder
+volumes_dir = /var/lib/cinder/volumes
+enabled_backends = ceph
+transport_url = rabbit://openstack:stein-demo@172.16.78.20
+my_ip = 172.16.78.20
+glance_api_version = 2
+host = storage
+glance_api_servers = http://172.16.78.20:9292
+[database]
+connection = mysql+pymysql://cinder:stein-demo@172.16.78.20/cinder
+
+
+[keystone_authtoken]
+www_authenticate_uri = http://172.16.78.20:5000
+auth_url = http://172.16.78.20:5000
+memcached_servers = 172.16.78.20:11211
+auth_type = password
+project_domain_id = default
+user_domain_id = default
+project_name = service
+username = cinder
+password = stein-demo
+auth_uri = http://172.16.78.20:5000
+project_domain_name = Default
+user_domain_name = Default
+
+
+[oslo_concurrency]
+lock_path = /var/lib/cinder/tmp
+
+
+[ceph]
+volume_driver = cinder.volume.drivers.rbd.RBDDriver
+volume_backend_name = ceph
+rbd_pool = volumes
+rbd_ceph_conf = /etc/ceph/ceph.conf
+rbd_flatten_volume_from_snapshot = false
+rbd_max_clone_depth = 5
+rbd_store_chunk_size = 4
+rados_connect_timeout = -1
+rbd_user = cinder
+rbd_secret_uuid = 6710902a-0466-49ba-87b4-d4653783305c
+report_discard_supported = true
+
+
+[oslo_messaging_notifications]
+driver = messagingv2
+topics = notifications
+EOF
+```
+
+- Restart service:
+
+```
+service cinder-volume cinder-scheduler restart
+service apache2 restart
+```
+
+- Kiểm tra hoạt động của cinder:
+
+```
+openstack volume service list        
++------------------+--------------+------+---------+-------+----------------------------+
+| Binary           | Host         | Zone | Status  | State | Updated At                 |
++------------------+--------------+------+---------+-------+----------------------------+
+| cinder-scheduler | storage      | nova | enabled | up    | 2019-10-07T03:34:05.000000 |
+| cinder-volume    | storage@ceph | nova | enabled | up    | 2019-10-07T03:34:01.000000 |
++------------------+--------------+------+---------+-------+----------------------------+
+```
+
+- Tiến hành tạo thử volume và volume với image:
+
+```
+root@controller-stein:~# openstack volume create --size 1 test                  
++---------------------+--------------------------------------+                  
+| Field               | Value                                |                  
++---------------------+--------------------------------------+                  
+| attachments         | []                                   |                     
+| availability_zone   | nova                                 |
+| bootable            | false                                |
+| consistencygroup_id | None                                 |
+| created_at          | 2019-10-07T03:34:24.000000           |
+| description         | None                                 |
+| encrypted           | False                                |
+| id                  | e43798b3-51ba-4f48-b378-0e7f13852452 |
+| migration_status    | None                                 |
+| multiattach         | False                                |
+| name                | test                                 |
+| properties          |                                      |
+| replication_status  | None                                 |
+| size                | 1                                    |
+| snapshot_id         | None                                 |
+| source_volid        | None                                 |
+| status              | creating                             |
+| type                | None                                 |
+| updated_at          | None                                 |
+| user_id             | 7513a35646cb467497f1814b18d91f5e     |
++---------------------+--------------------------------------+
+
+root@controller-stein:~# openstack volume create --size 1 --image cirros test-image   
++---------------------+--------------------------------------+                        
+| Field               | Value                                |                        
++---------------------+--------------------------------------+                        
+| attachments         | []                                   |                        
+| availability_zone   | nova                                 |
+| bootable            | false                                |
+| consistencygroup_id | None                                 |
+| created_at          | 2019-10-07T03:34:55.000000           |
+| description         | None                                 |
+| encrypted           | False                                |
+| id                  | 47873e74-5bc2-4d0a-848f-f6a61b3c4953 |
+| migration_status    | None                                 |
+| multiattach         | False                                |
+| name                | test-image                           |
+| properties          |                                      |
+| replication_status  | None                                 |
+| size                | 1                                    |
+| snapshot_id         | None                                 |
+| source_volid        | None                                 |
+| status              | creating                             |
+| type                | None                                 |
+| updated_at          | None                                 |
+| user_id             | 7513a35646cb467497f1814b18d91f5e     |
++---------------------+--------------------------------------+
+
+root@controller-stein:~# openstack volume list
++--------------------------------------+------------+-----------+------+-------------+
+| ID                                   | Name       | Status    | Size | Attached to |
++--------------------------------------+------------+-----------+------+-------------+
+| 47873e74-5bc2-4d0a-848f-f6a61b3c4953 | test-image | available |    1 |             |
+| e43798b3-51ba-4f48-b378-0e7f13852452 | test       | available |    1 |             |
++--------------------------------------+------------+-----------+------+-------------+
+```
+
