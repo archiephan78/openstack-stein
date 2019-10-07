@@ -1,0 +1,1 @@
+Openstack in 10 min with docker

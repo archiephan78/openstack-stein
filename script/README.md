@@ -1,0 +1,1 @@
+Đây là chỗ lưu những script automation install openstack stein
