@@ -69,7 +69,7 @@ openstack keypair create --public-key ~/.ssh/id_rsa.pub mykey
 openstack security group rule create --proto icmp default
 ```
 
-- Tạo VM selfservice network:
+- Tạo VM selfservice network ( chú ý tạo VM bằng command này là ephemeral volume, muốn tạo persistent volume thì phải tạo volume = cinder trước hoặc tạo VM trên dashboard):
 
 ```
 openstack server create --flavor m1.nano --image cirros \

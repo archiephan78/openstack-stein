@@ -179,6 +179,21 @@ cat << EOF > /etc/ceph/ceph.client.cinder.keyring
 EOF
 ```
 
+- 
+
+```
+cat > secret.xml <<EOF
+<secret ephemeral='no' private='no'>
+  <uuid>6710902a-0466-49ba-87b4-d4653783305c</uuid>
+  <usage type='ceph'>
+    <name>client.cinder secret</name>
+  </usage>
+</secret>
+EOF
+sudo virsh secret-define --file secret.xml
+sudo virsh secret-set-value --secret 6710902a-0466-49ba-87b4-d4653783305c --base64 AQDUpJpd9gGlJxAAjo2BfELofwssdluzrZ+ElA==
+```
+
 - Kiểm tra hoạt động của nova-compute:
 
 ```
