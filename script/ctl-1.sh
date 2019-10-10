@@ -16,7 +16,7 @@ sleep 3
 apt-get install -y crudini
 
 echocolor "Install python client"
-apt-get -y install python-openstackclient
+apt install python3-openstackclient -y
 sleep 5
 
 ##############################################
