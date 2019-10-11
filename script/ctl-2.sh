@@ -67,11 +67,11 @@ GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'%' IDENTIFIED BY '$CINDER_DBPASS';
 FLUSH PRIVILEGES;"
 
 
-echocolor "Create DB for OCTAVIA"
-sleep 5
-mysql -uroot -p$MYSQL_PASS -e "
-CREATE DATABASE octavia;
-GRANT ALL PRIVILEGES ON octavia.* TO 'octavia'@'localhost' IDENTIFIED BY '$OCTAVIA_DBPASS';
-GRANT ALL PRIVILEGES ON octavia.* TO 'octavia'@'%' IDENTIFIED BY '$OCTAVIA_DBPASS';
-FLUSH PRIVILEGES;"
+# echocolor "Create DB for OCTAVIA"
+# sleep 5
+# mysql -uroot -p$MYSQL_PASS -e "
+# CREATE DATABASE octavia;
+# GRANT ALL PRIVILEGES ON octavia.* TO 'octavia'@'localhost' IDENTIFIED BY '$OCTAVIA_DBPASS';
+# GRANT ALL PRIVILEGES ON octavia.* TO 'octavia'@'%' IDENTIFIED BY '$OCTAVIA_DBPASS';
+# FLUSH PRIVILEGES;"
 

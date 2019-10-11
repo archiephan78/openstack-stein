@@ -20,7 +20,7 @@ log_dir = /var/log/keystone
 [cors]
 [credential]
 [database]
-connection = mysql+pymysql://keystone:$KEYSTONE_PASS@$CTL_MGNT_IP/keystone
+connection = mysql+pymysql://keystone:$KEYSTONE_DBPASS@$CTL_MGNT_IP/keystone
 [domain_config]
 [endpoint_filter]
 [endpoint_policy]
