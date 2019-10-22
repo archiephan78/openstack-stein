@@ -2,8 +2,10 @@
 source config.cfg                                                                     
 source functions.sh
 
-sudo yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+echocolor "install epel"
+yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 
+echocolor "Update repo"
 cat << EOM > /etc/yum.repos.d/ceph.repo
 [ceph-noarch]
 name=Ceph noarch packages
@@ -15,23 +17,24 @@ gpgkey=https://download.ceph.com/keys/release.asc
 priority=1
 EOM
 
-sudo yum update
+sudo yum update -y
 echocolor "Install ceph deploy"
 sleep 3
 sudo yum install ceph-deploy -y
-echo "$CEPH_IP      ceph" >> /etc/hosts    
-ceph-deploy new ceph
+echo "$CEPH_IP      ceph-1" >> /etc/hosts    
+ceph-deploy new ceph-1
 
 echocolor "Update config ceph"
 sleep 3
-echo "public_network=$CEPH_IP" >> ceph.conf
+echo "public_network = $CEPH_IP/22" >> ceph.conf
 
 echocolor "Install ceph"
 sleep 3
-ceph-deploy install ceph
+ceph-deploy install ceph-1
 ceph-deploy mon create-initial
-ceph-deploy osd create --data /dev/vdb ceph
-ceph-deploy mgr create ceph
+ceph-deploy admin ceph-1
+ceph-deploy osd create --data /dev/vdb ceph-1
+ceph-deploy mgr create ceph-1
 
 echocolor "Cretate volumes and images pool"
 sleep 3
