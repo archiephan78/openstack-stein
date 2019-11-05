@@ -71,7 +71,7 @@ python3 /usr/share/openstack-dashboard/manage.py compress
 service apache2 restart
 ```
 
-- Trên dashboard kiểm tra mucj VPN ở phần network:
+- Trên dashboard kiểm tra mục VPN ở phần network:
 
 ![](static/vpnaas.png) 
 
@@ -279,3 +279,28 @@ conn-to-vpnaas{4}:   172.16.69.0/24 === 192.168.177.0/24
 
 ![](static/vpn-ping.png) 
 
+
+###  Phân tích gói tin qua VPN với Wireshark:
+
+-   Trên 1 máy thuộc mạng Lan bên remote (172.16.69.29/24). mở cổng HTTP 80:
+
+![](static/simple-http2.png) 
+
+- Tạo 1 VM trên OPS thuộc dải 192.168.177.0/24 và thử kết nối đến 172.16.69.29:80 :
+
+![](static/http-curl.png) 
+
+- Trên q-router đặt tcpdump để bắt trafic qua VPN:
+
+```
+ip netns e qrouter-020979d0-0451-476f-8ded-7baf08ef436c tcpdump  -i qg-239ba6a1-39 -vvv host 10.5.9.47
+```
+
+- Kết quả có được:
+
+![](static/ESP.png)
+
+
+- Phân tích file pcap với wireshark:
+
+![](static/wire.png)
